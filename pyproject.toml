@@ -1,0 +1,20 @@
+[project]
+name = "airflow-batch-elt"
+version = "0.1.0"
+description = "Enterprise Airflow batch ELT pipeline on GCP — Project 1"
+requires-python = ">=3.11"
+dependencies = [
+    "apache-airflow==2.9.1",
+    "apache-airflow-providers-databricks>=6.0.0",
+    "apache-airflow-providers-google>=10.0.0",
+    "dbt-bigquery>=1.8.0",
+    "dbt-core>=1.8.0",
+    "great-expectations>=0.18.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=3.7.0",
+    "pytest>=8.0.0",
+    "ruff>=0.4.0",
+]
