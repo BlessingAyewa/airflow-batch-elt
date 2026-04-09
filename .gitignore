@@ -22,7 +22,6 @@ include/great_expectations/uncommitted/
 
 # uv
 .venv/
-uv.lock
 
 # OS
 .DS_Store
