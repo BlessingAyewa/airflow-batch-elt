@@ -1,11 +1,11 @@
-version: '3.8'
+# version: '3.8'
 
 x-airflow-common: &airflow-common
   build:
-    context: ..
-    dockerfile: docker/Dockerfile
+    context: .
+    dockerfile: Dockerfile
   env_file:
-    - ../.env
+    - .env
   environment:
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
@@ -13,16 +13,16 @@ x-airflow-common: &airflow-common
     AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
     AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
     AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY}
-    AIRFLOW__LOGGING__REMOTE_LOGGING: 'True'
-    AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER: gs://${GCS_BUCKET}/airflow-logs
-    AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID: google_cloud_default
-    GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/keys/gcp-sa.json
+    # AIRFLOW__LOGGING__REMOTE_LOGGING: 'True'
+    # AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER: gs://${GCS_BUCKET}/airflow-logs
+    # AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID: google_cloud_default
+    # GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/keys/gcp-sa.json
   volumes:
-    - ../dags:${AIRFLOW_HOME}/dags
-    - ../plugins:${AIRFLOW_HOME}/plugins
-    - ../include:${AIRFLOW_HOME}/include
-    - ../logs:/opt/airflow/logs
-    - ../keys:/opt/airflow/keys:ro
+    - ./dags:/opt/airflow/dags
+    - ./plugins:/opt/airflow/plugins
+    - ./include:/opt/airflow/include
+    - ./logs:/opt/airflow/logs
+    #- ./keys:/opt/airflow/keys:ro
   depends_on:
     postgres:
       condition: service_healthy
@@ -56,17 +56,7 @@ services:
 
   airflow-init:
     <<: *airflow-common
-    command: >
-      bash -c "
-        airflow db migrate &&
-        airflow users create
-          --username admin
-          --password admin
-          --firstname Admin
-          --lastname User
-          --role Admin
-          --email admin@example.com
-      "
+    command: bash -c "airflow db migrate && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com"
     restart: on-failure
 
   airflow-webserver:

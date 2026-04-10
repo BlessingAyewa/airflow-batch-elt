@@ -9,18 +9,18 @@ USER airflow
 
 COPY pyproject.toml uv.lock ./
 
-RUN pip install --no-cache-dir uv \
+RUN pip install --no-cache-dir "uv==0.8.13" \
     && uv sync --frozen --no-dev
 
 ENV AIRFLOW__CORE__LOAD_EXAMPLES=False
 ENV AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
-ENV PYTHONPATH="${AIRFLOW_HOME}"
+ENV PYTHONPATH="/opt/airflow"
 
-COPY dags/ ${AIRFLOW_HOME}/dags/
-COPY plugins/ ${AIRFLOW_HOME}/plugins/
-COPY include/ ${AIRFLOW_HOME}/include/
+COPY dags/ /opt/airflow/dags/
+COPY plugins/ /opt/airflow/plugins/
+COPY include/ /opt/airflow/include/
 
-WORKDIR ${AIRFLOW_HOME}
+WORKDIR /opt/airflow
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
     CMD airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"
