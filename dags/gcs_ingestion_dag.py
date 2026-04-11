@@ -88,7 +88,7 @@ with DAG(
         sense_file = GCSObjectExistenceSensor(
             task_id="sense_gcs_file",
             bucket=GCS_BUCKET,
-            object=f"{GCS_PREFIX}/{GCS_FILENAME}",
+            object=f"{GCS_PREFIX}/{{{{ ds }}}}/{GCS_FILENAME}",
             google_cloud_conn_id="google_cloud_default",
             deferrable=True
         )
@@ -98,14 +98,14 @@ with DAG(
             python_callable=validate_orders,
             op_kwargs={
                 "gcs_bucket": GCS_BUCKET,
-                "gcs_object": f"{GCS_PREFIX}/{GCS_FILENAME}"
+                "gcs_object": f"{GCS_PREFIX}/{{{{ ds }}}}/{GCS_FILENAME}"
             }
         )
 
         load_bq = GCSToBigQueryOperator(
             task_id="load_to_bigquery",
             bucket=GCS_BUCKET,
-            source_objects=[f"{GCS_PREFIX}/{GCS_FILENAME}"],
+            source_objects=[f"{GCS_PREFIX}/{{{{ ds }}}}/{GCS_FILENAME}"],
             destination_project_dataset_table=f"{GCP_PROJECT}.{BQ_DATASET}.{BQ_TABLE}",
             source_format="CSV",
             skip_leading_rows=1,
