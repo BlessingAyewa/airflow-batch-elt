@@ -15,7 +15,9 @@ standalone_admin_password.txt
 # Secrets and credentials
 .env
 keys/
-*.json
+*-sa.json
+*-key.json
+keys/*.json
 
 # Great Expectations runtime output
 include/great_expectations/uncommitted/

@@ -1,7 +1,7 @@
 """
 GCS Ingestion DAG
 =================
-Ingests raw data files fromGCS into BigQuery.
+Ingests raw data files from GCS into BigQuery.
 
 Schedule    : Daily at 06:00 UTC
 Owner       : data-engineering
@@ -11,17 +11,20 @@ Tags        : ingestion, gcs, bigquery
 from __future__ import annotations
 
 import logging
+import json
 from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.models import Variable
 from airflow.operators.empty import EmptyOperator
-from airflow.operators.python import PythonOperator
+from airflow.providers.google.cloud.sensors.gcs import GCSObjectExistenceSensor
+from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
 from airflow.utils.task_group import TaskGroup
 
-from include.gcs.ingestion import check_gcs_file, load_to_bigquery
-
 log = logging.getLogger(__name__)
+
+with open("include/gcs/schemas/orders.json") as f:
+    ORDERS_SCHEMA = json.load(f)
 
 def on_failure_callback(context: dict) -> None:
     """Called automatically by Airflow when any task fails."""
@@ -67,20 +70,39 @@ with DAG(
     doc_md=__doc__
 ) as dag:
     
+    GCP_PROJECT     = Variable.get("gcp_project_id", default_var="my-gcp-project")
+    GCS_BUCKET      = Variable.get("gcs_bucket", default_var="my-gcs-bucket")
+    GCS_PREFIX      = Variable.get("gcs_prefix", default_var="raw/orders")
+    GCS_FILENAME    = Variable.get("gcs_filename", default_var="orders.csv")
+    BQ_DATASET      = Variable.get("bq_dataset", default_var="raw")
+    BQ_TABLE        = Variable.get("bq_table", default_var="orders")
+
     start = EmptyOperator(task_id="start")
     end = EmptyOperator(task_id="end")
 
     with TaskGroup("ingest") as ingest_group:
-        check_file = PythonOperator(
-            task_id="check_gcs_file",
-            python_callable=check_gcs_file
+
+        sense_file = GCSObjectExistenceSensor(
+            task_id="sense_gcs_file",
+            bucket=GCS_BUCKET,
+            object=f"{GCS_PREFIX}/{GCS_FILENAME}",
+            google_cloud_conn_id="google_cloud_default",
+            deferrable=True
         )
 
-        load_bq = PythonOperator(
+        load_bq = GCSToBigQueryOperator(
             task_id="load_to_bigquery",
-            python_callable=load_to_bigquery
+            bucket=GCS_BUCKET,
+            source_objects=[f"{GCS_PREFIX}/{GCS_FILENAME}"],
+            destination_project_dataset_table=f"{GCP_PROJECT}.{BQ_DATASET}.{BQ_TABLE}",
+            source_format="CSV",
+            skip_leading_rows=1,
+            write_disposition="WRITE_TRUNCATE",
+            gcp_conn_id="google_cloud_default",
+            schema_fields=ORDERS_SCHEMA,
+            autodetect=False           
         )
 
-        check_file >> load_bq
+        sense_file >> load_bq
     
     start >> ingest_group >> end
