@@ -20,7 +20,7 @@ keys/
 keys/*.json
 
 # Great Expectations runtime output
-include/great_expectations/uncommitted/
+include/great_expectations/gx/uncommitted/
 
 # uv
 .venv/
