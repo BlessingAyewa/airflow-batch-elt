@@ -1,4 +1,5 @@
 FROM apache/airflow:2.9.1-python3.11
+
 USER root
 
 RUN apt-get update && apt-get install -y build-essential git \
@@ -9,8 +10,10 @@ USER airflow
 
 COPY pyproject.toml uv.lock ./
 
-RUN pip install --no-cache-dir "uv==0.8.13" \
-    && uv sync --frozen --no-dev
+RUN pip install --no-cache-dir "uv==0.11.6" \
+    && uv export --no-dev --no-hashes > /tmp/requirements.txt \
+    && uv pip install --no-cache-dir -r /tmp/requirements.txt \
+    && rm /tmp/requirements.txt
 
 ENV AIRFLOW__CORE__LOAD_EXAMPLES=False
 ENV AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
