@@ -19,7 +19,10 @@ from airflow.models import Variable
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.google.cloud.sensors.gcs import GCSObjectExistenceSensor
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
+from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
+
+from include.gcs.ingestion import validate_orders
 
 log = logging.getLogger(__name__)
 
@@ -90,6 +93,15 @@ with DAG(
             deferrable=True
         )
 
+        validate = PythonOperator(
+            task_id="validate_orders",
+            python_callable=validate_orders,
+            op_kwargs={
+                "gcs_bucket": GCS_BUCKET,
+                "gcs_object": f"{GCS_PREFIX}/{GCS_FILENAME}"
+            }
+        )
+
         load_bq = GCSToBigQueryOperator(
             task_id="load_to_bigquery",
             bucket=GCS_BUCKET,
@@ -103,6 +115,6 @@ with DAG(
             autodetect=False           
         )
 
-        sense_file >> load_bq
+        sense_file >> validate >> load_bq
     
     start >> ingest_group >> end
