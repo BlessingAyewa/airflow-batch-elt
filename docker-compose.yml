@@ -13,16 +13,16 @@ x-airflow-common: &airflow-common
     AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
     AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
     AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY}
-    # AIRFLOW__LOGGING__REMOTE_LOGGING: 'True'
-    # AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER: gs://${GCS_BUCKET}/airflow-logs
-    # AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID: google_cloud_default
-    # GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/keys/gcp-sa.json
+    AIRFLOW__LOGGING__REMOTE_LOGGING: 'True'
+    AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER: gs://${GCS_BUCKET}/airflow-logs
+    AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID: google_cloud_default
+    GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/keys/gcp-sa.json
   volumes:
     - ./dags:/opt/airflow/dags
     - ./plugins:/opt/airflow/plugins
     - ./include:/opt/airflow/include
     - ./logs:/opt/airflow/logs
-    #- ./keys:/opt/airflow/keys:ro
+    - ./keys:/opt/airflow/keys:ro
   depends_on:
     postgres:
       condition: service_healthy
