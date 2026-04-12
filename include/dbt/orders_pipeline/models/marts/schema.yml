@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: Final orders fact table with business logic applied — used by dashboards and analysts
+    columns:
+      - name: order_id
+        description: Unique order identifier
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: Customer who placed the order
+        tests:
+          - not_null
+      - name: order_amount
+        description: Raw order value in base currency
+        tests:
+          - not_null
+      - name: order_date
+        description: Date the order was placed
+        tests:
+          - not_null
+      - name: order_status
+        description: Current status — pending, complete or cancelled
+        tests:
+          - not_null
+          - accepted_values:
+              values: [pending, complete, cancelled]
+      - name: order_month
+        description: Order date truncated to first of month — for monthly aggregations
+        tests:
+          - not_null
+      - name: recognised_revenue
+        description: Revenue only from completed orders — zero for pending and cancelled
+        tests:
+          - not_null
+      - name: is_cancelled
+        description: Boolean flag — true if order was cancelled
+        tests:
+          - not_null

@@ -20,6 +20,7 @@ from airflow.operators.empty import EmptyOperator
 from airflow.providers.google.cloud.sensors.gcs import GCSObjectExistenceSensor
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
 from airflow.operators.python import PythonOperator
+from airflow.operators.bash import BashOperator
 from airflow.utils.task_group import TaskGroup
 
 from include.gcs.ingestion import validate_orders
@@ -117,4 +118,55 @@ with DAG(
 
         sense_file >> validate >> load_bq
     
-    start >> ingest_group >> end
+
+    DBT_DIR             = "/opt/airflow/include/dbt/orders_pipeline"
+    PROFILES_DIR        = "/opt/airflow/include/dbt" 
+
+    with TaskGroup("transform") as transform_group:
+        dbt_staging = BashOperator(
+            task_id="dbt_run_staging",
+            bash_command=(
+                f"dbt run "
+                f"--profiles-dir {PROFILES_DIR} "
+                f"--project-dir {DBT_DIR} "
+                f"--select staging "
+                f"--target prod"
+            )
+        )
+
+        dbt_test_staging = BashOperator(
+            task_id="dbt_test_staging",
+            bash_command=(
+                f"dbt test "
+                f"--profiles-dir {PROFILES_DIR} "
+                f"--project-dir {DBT_DIR} "
+                f"--select staging "
+                f"--target prod"
+            ),
+        )
+
+        dbt_marts = BashOperator(
+            task_id="dbt_run_marts",
+            bash_command=(
+                f"dbt run "
+                f"--profiles-dir {PROFILES_DIR} "
+                f"--project-dir {DBT_DIR} "
+                f"--select marts "
+                f"--target prod"
+            ),
+        )
+
+        dbt_test_marts = BashOperator(
+            task_id="dbt_test_marts",
+            bash_command=(
+                f"dbt test "
+                f"--profiles-dir {PROFILES_DIR} "
+                f"--project-dir {DBT_DIR} "
+                f"--select marts "
+                f"--target prod"
+            ),
+        )
+
+        dbt_staging >> dbt_test_staging >> dbt_marts >> dbt_test_marts
+
+    start >> ingest_group >> transform_group >> end

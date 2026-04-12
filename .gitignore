@@ -28,3 +28,6 @@ include/great_expectations/gx/uncommitted/
 # OS
 .DS_Store
 Thumbs.db
+include/dbt/logs/
+include/dbt/orders_pipeline/target/
+include/dbt/orders_pipeline/dbt_packages/
