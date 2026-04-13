@@ -12,12 +12,12 @@ COPY pyproject.toml uv.lock ./
 
 RUN pip install --no-cache-dir "uv==0.11.6" \
     && uv export --no-dev --no-hashes > /tmp/requirements.txt \
-    && uv pip install --no-cache-dir -r /tmp/requirements.txt \
+    && pip install --no-cache-dir -r /tmp/requirements.txt \
     && rm /tmp/requirements.txt
 
-ENV AIRFLOW__CORE__LOAD_EXAMPLES=False
-ENV AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
-ENV PYTHONPATH="/opt/airflow"
+ENV AIRFLOW__CORE__LOAD_EXAMPLES=False \
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True \
+    PYTHONPATH="/opt/airflow"
 
 COPY dags/ /opt/airflow/dags/
 COPY plugins/ /opt/airflow/plugins/
