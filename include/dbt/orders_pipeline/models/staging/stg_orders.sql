@@ -7,8 +7,8 @@ with source as (
 ),
 
 renamed as (
-    select 
-        order_i,
+    select
+        order_id,
         customer_id,
         cast(amount as numeric)         as order_amount,
         cast(order_date as date)        as order_date,

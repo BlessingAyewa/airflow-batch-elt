@@ -101,3 +101,48 @@ resource "local_file" "airflow_sa_key_file" {
   filename        = "${path.module}/../keys/gcp-sa.json"
   file_permission = "0600"
 }
+
+# ── GKE ────────────────────────────────────────────────────────────────────────
+
+resource "google_project_service" "container" {
+  service            = "container.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_container_cluster" "airflow" {
+  name     = var.gke_cluster_name
+  location = "${var.region}-a"
+
+  remove_default_node_pool = true
+  initial_node_count       = 1
+
+  workload_identity_config {
+    workload_pool = "${var.project_id}.svc.id.goog"
+  }
+
+  depends_on = [google_project_service.container]
+}
+
+resource "google_container_node_pool" "airflow_nodes" {
+  name       = "airflow-node-pool"
+  cluster    = google_container_cluster.airflow.id
+  node_count = var.gke_node_count
+
+  node_config {
+    machine_type = "e2-standard-4"
+
+    workload_metadata_config {
+      mode = "GKE_METADATA"
+    }
+
+    oauth_scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+  }
+}
+
+resource "google_service_account_iam_member" "workload_identity_binding" {
+  service_account_id = google_service_account.airflow_sa.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[airflow/airflow]"
+}

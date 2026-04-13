@@ -36,10 +36,8 @@ def validate_orders(gcs_bucket: str, gcs_object: str) -> None:
 
         batch = context.data_sources.pandas_default.read_dataframe(df)
 
-        results = context.run_validations(
-            batch=batch,
-            suite_name="orders_suite"
-        )
+        suite = context.suites.get("orders_suite")
+        results = batch.validate(suite)
 
         if not results.success:
             failed = [

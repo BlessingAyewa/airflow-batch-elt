@@ -72,7 +72,12 @@ services:
 
   airflow-worker:
     <<: *airflow-common
-    command: airflow celery worker
+    command: airflow celery worker -H worker@%h
+    restart: unless-stopped
+
+  airflow-triggerer:
+    <<: *airflow-common
+    command: airflow triggerer
     restart: unless-stopped
 
 volumes:

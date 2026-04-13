@@ -1,0 +1,63 @@
+# k8s/helm/values.yaml
+
+executor: KubernetesExecutor
+
+image:
+  repository: gcr.io/blessing-airflow-elt/airflow
+  tag: latest
+  pullPolicy: Always
+
+serviceAccount:
+  create: false
+  name: airflow
+
+env:
+  - name: AIRFLOW__CORE__LOAD_EXAMPLES
+    value: "False"
+  - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
+    value: "True"
+  - name: GCP_PROJECT_ID
+    value: "blessing-airflow-elt"
+  - name: GCS_BUCKET
+    value: "blessing-airflow-elt-airflow-data"
+  - name: AIRFLOW_VAR_GCP_PROJECT_ID
+    value: "blessing-airflow-elt"
+  - name: AIRFLOW_VAR_GCS_BUCKET
+    value: "blessing-airflow-elt-airflow-data"
+  - name: AIRFLOW_VAR_GCS_PREFIX
+    value: "raw/orders"
+  - name: AIRFLOW_VAR_GCS_FILENAME
+    value: "orders.csv"
+  - name: AIRFLOW_VAR_BQ_DATASET
+    value: "raw"
+  - name: AIRFLOW_VAR_BQ_TABLE
+    value: "orders"
+
+secret:
+  - envName: AIRFLOW__CORE__FERNET_KEY
+    secretName: airflow-fernet-key
+    secretKey: fernet-key
+  - envName: AIRFLOW__WEBSERVER__SECRET_KEY
+    secretName: airflow-secret-key
+    secretKey: secret-key
+
+logs:
+  persistence:
+    enabled: false
+  remoteLogging: true
+
+config:
+  logging:
+    remote_logging: "True"
+    remote_base_log_folder: "gs://blessing-airflow-elt-airflow-data/airflow-logs"
+    remote_log_conn_id: "google_cloud_default"
+
+webserver:
+  service:
+    type: LoadBalancer
+
+postgresql:
+  enabled: true
+
+redis:
+  enabled: false

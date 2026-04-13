@@ -31,3 +31,16 @@ variable "bq_location" {
   type        = string
   default     = "US"
 }
+
+
+variable "gke_cluster_name" {
+  description = "Name of the GKE cluster"
+  type        = string
+  default     = "airflow-cluster"
+}
+
+variable "gke_node_count" {
+  description = "Number of nodes in the GKE node pool"
+  type        = number
+  default     = 1
+}

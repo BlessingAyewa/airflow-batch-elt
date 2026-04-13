@@ -32,3 +32,14 @@ output "fernet_key_secret_id" {
   description = "Secret Manager secret ID for the Airflow Fernet key"
   value       = google_secret_manager_secret.fernet_key.secret_id
 }
+
+output "gke_cluster_name" {
+  description = "GKE cluster name"
+  value       = google_container_cluster.airflow.name
+}
+
+output "gke_cluster_endpoint" {
+  description = "GKE cluster endpoint — used by kubectl to connect"
+  value       = google_container_cluster.airflow.endpoint
+  sensitive   = true
+}
