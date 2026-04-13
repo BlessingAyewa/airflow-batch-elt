@@ -9,7 +9,7 @@ terraform{
     }
 
     backend "gcs" {
-        bucket = "YOUR_PROJECT_ID-terraform-state"
+        bucket = "blessing-airflow-elt-terraform-state"
         prefix = "airflow-batch-elt"
     }
 }
