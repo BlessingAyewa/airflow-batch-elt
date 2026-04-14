@@ -75,6 +75,12 @@ resource "google_project_iam_member" "airflow_artifact_writer" {
   member  = "serviceAccount:${google_service_account.airflow_sa.email}"
 }
 
+resource "google_project_iam_member" "airflow_gke_developer" {
+  project = var.project_id
+  role    = "roles/container.developer"
+  member  = "serviceAccount:${google_service_account.airflow_sa.email}"
+}
+
 resource "google_secret_manager_secret" "fernet_key" {
   secret_id = "airflow-fernet-key"
 
