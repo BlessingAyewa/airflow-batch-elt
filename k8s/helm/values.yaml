@@ -44,7 +44,6 @@ secret:
 logs:
   persistence:
     enabled: false
-  remoteLogging: true
 
 config:
   logging:
