@@ -8,7 +8,7 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/airflow
+  IMAGE: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/airflow/airflow
   GKE_CLUSTER: ${{ secrets.GKE_CLUSTER_NAME }}
   GKE_ZONE: ${{ secrets.GKE_ZONE }}
 
@@ -34,7 +34,7 @@ jobs:
     name: Build, Push and Deploy
     runs-on: ubuntu-latest
     needs: test
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v4
@@ -47,8 +47,8 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for GCR
-        run: gcloud auth configure-docker
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
       - name: Build Docker image
         run: docker build -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .

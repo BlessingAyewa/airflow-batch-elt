@@ -3,7 +3,7 @@
 executor: KubernetesExecutor
 
 image:
-  repository: gcr.io/blessing-airflow-elt/airflow
+  repository: us-central1-docker.pkg.dev/blessing-airflow-elt/airflow/airflow
   tag: latest
   pullPolicy: Always
 

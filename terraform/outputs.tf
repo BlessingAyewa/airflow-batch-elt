@@ -19,7 +19,7 @@ output "marts_dataset_id" {
 }
 
 output "service_account_email" {
-  description = "Airflow service account email — use this in Airflow GCP connection"
+  description = "Airflow service account email"
   value       = google_service_account.airflow_sa.email
 }
 
@@ -31,6 +31,11 @@ output "service_account_key_path" {
 output "fernet_key_secret_id" {
   description = "Secret Manager secret ID for the Airflow Fernet key"
   value       = google_secret_manager_secret.fernet_key.secret_id
+}
+
+output "artifact_registry_url" {
+  description = "Artifact Registry URL for Docker images"
+  value       = "${var.region}-docker.pkg.dev/${var.project_id}/airflow/airflow"
 }
 
 output "gke_cluster_name" {

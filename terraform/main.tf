@@ -2,7 +2,7 @@ resource "google_storage_bucket" "airflow_data" {
   name                        = var.bucket_name
   location                    = var.region
   uniform_bucket_level_access = true
-  force_destroy               = false
+  force_destroy               = true
 
   versioning {
     enabled = true
@@ -19,21 +19,24 @@ resource "google_storage_bucket" "airflow_data" {
 }
 
 resource "google_bigquery_dataset" "raw" {
-  dataset_id  = "raw"
-  location    = var.bq_location
-  description = "Raw data loaded by Airflow — do not query directly"
+  dataset_id                 = "raw"
+  location                   = var.bq_location
+  description                = "Raw data loaded by Airflow — do not query directly"
+  delete_contents_on_destroy = true
 }
 
 resource "google_bigquery_dataset" "staging" {
-  dataset_id  = "staging"
-  location    = var.bq_location
-  description = "Staging views built by dbt — cleaned raw data"
+  dataset_id                 = "staging"
+  location                   = var.bq_location
+  description                = "Staging views built by dbt — cleaned raw data"
+  delete_contents_on_destroy = true
 }
 
 resource "google_bigquery_dataset" "marts" {
-  dataset_id  = "marts"
-  location    = var.bq_location
-  description = "Analytics tables built by dbt — source of truth for dashboards"
+  dataset_id                 = "marts"
+  location                   = var.bq_location
+  description                = "Analytics tables built by dbt — source of truth for dashboards"
+  delete_contents_on_destroy = true
 }
 
 resource "google_service_account" "airflow_sa" {
@@ -63,6 +66,12 @@ resource "google_project_iam_member" "airflow_storage_admin" {
 resource "google_project_iam_member" "airflow_secret_accessor" {
   project = var.project_id
   role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.airflow_sa.email}"
+}
+
+resource "google_project_iam_member" "airflow_artifact_writer" {
+  project = var.project_id
+  role    = "roles/artifactregistry.writer"
   member  = "serviceAccount:${google_service_account.airflow_sa.email}"
 }
 
@@ -102,6 +111,21 @@ resource "local_file" "airflow_sa_key_file" {
   file_permission = "0600"
 }
 
+# ── Artifact Registry ──────────────────────────────────────────────────────────
+
+resource "google_project_service" "artifact_registry" {
+  service            = "artifactregistry.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_artifact_registry_repository" "airflow" {
+  repository_id = "airflow"
+  format        = "DOCKER"
+  location      = var.region
+  description   = "Docker images for Airflow"
+  depends_on = [google_project_service.artifact_registry]
+}
+
 # ── GKE ────────────────────────────────────────────────────────────────────────
 
 resource "google_project_service" "container" {
@@ -110,8 +134,9 @@ resource "google_project_service" "container" {
 }
 
 resource "google_container_cluster" "airflow" {
-  name     = var.gke_cluster_name
-  location = "${var.region}-a"
+  name                = var.gke_cluster_name
+  location            = "${var.region}-b"
+  deletion_protection = false
 
   remove_default_node_pool = true
   initial_node_count       = 1
