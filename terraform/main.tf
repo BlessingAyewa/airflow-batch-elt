@@ -77,7 +77,7 @@ resource "google_project_iam_member" "airflow_artifact_writer" {
 
 resource "google_project_iam_member" "airflow_gke_developer" {
   project = var.project_id
-  role    = "roles/container.developer"
+  role    = "roles/container.admin"
   member  = "serviceAccount:${google_service_account.airflow_sa.email}"
 }
 
