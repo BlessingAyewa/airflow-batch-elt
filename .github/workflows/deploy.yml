@@ -88,6 +88,11 @@ jobs:
             sleep 10
           done
 
+      - name: Reset Helm-managed secrets
+        run: |
+          kubectl delete secret -n airflow airflow-fernet-key --ignore-not-found=true
+          kubectl delete secret -n airflow airflow-secret-key --ignore-not-found=true
+
       - name: Deploy to GKE with Helm
         run: |
           helm repo add apache-airflow https://airflow.apache.org
