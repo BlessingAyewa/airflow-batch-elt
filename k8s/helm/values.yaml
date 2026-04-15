@@ -2,6 +2,11 @@
 
 executor: KubernetesExecutor
 
+# Pin the default image used by init containers and migration job
+# to the same Airflow version our custom image is built on.
+defaultAirflowRepository: apache/airflow
+defaultAirflowTag: "2.9.1-python3.11"
+
 image:
   repository: us-central1-docker.pkg.dev/blessing-airflow-elt/airflow/airflow
   tag: latest
@@ -55,8 +60,25 @@ webserver:
   service:
     type: LoadBalancer
 
+# Use our external postgres StatefulSet instead of the bundled Bitnami chart.
 postgresql:
-  enabled: true
+  enabled: false
+
+data:
+  metadataConnection:
+    user: airflow
+    pass: airflow
+    host: airflow-postgresql
+    port: 5432
+    db: airflow
+    sslmode: disable
 
 redis:
   enabled: false
+
+# Run DB migrations as a plain Job (not a Helm hook) so it always executes.
+# Uses defaultAirflowTag image above to match the migration head in the DB.
+migrateDatabaseJob:
+  enabled: true
+  useHelmHooks: false
+  applyCustomEnv: false
