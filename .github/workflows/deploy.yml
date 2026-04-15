@@ -96,5 +96,32 @@ jobs:
             --namespace airflow \
             --version "1.15.0" \
             --values k8s/helm/values.yaml \
-            --set image.tag=${{ github.sha }} \
-            --wait --timeout 20m
+            --set image.tag=${{ github.sha }}
+
+      - name: Verify deployment
+        run: |
+          echo "--- Pod status ---"
+          kubectl get pods -n airflow
+          echo "--- Waiting for statsd ---"
+          kubectl rollout status deployment/airflow-statsd -n airflow --timeout=3m
+          echo "--- Waiting for webserver ---"
+          kubectl rollout status deployment/airflow-webserver -n airflow --timeout=10m || {
+            echo "Webserver failed. Logs:";
+            kubectl logs -n airflow -l component=webserver --tail=50;
+            kubectl describe pod -n airflow -l component=webserver | tail -30;
+            exit 1;
+          }
+          echo "--- Waiting for scheduler ---"
+          kubectl rollout status deployment/airflow-scheduler -n airflow --timeout=10m || {
+            echo "Scheduler failed. Logs:";
+            kubectl logs -n airflow -l component=scheduler --tail=50;
+            exit 1;
+          }
+          echo "--- Waiting for triggerer ---"
+          kubectl rollout status statefulset/airflow-triggerer -n airflow --timeout=5m || {
+            echo "Triggerer failed. Logs:";
+            kubectl logs -n airflow -l component=triggerer --tail=50;
+            exit 1;
+          }
+          echo "--- All components healthy ---"
+          kubectl get pods -n airflow
