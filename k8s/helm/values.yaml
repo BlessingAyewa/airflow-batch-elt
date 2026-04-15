@@ -75,3 +75,9 @@ redis:
 # Migrations are run explicitly in CI before Helm deploys.
 migrateDatabaseJob:
   enabled: false
+
+# Create the default admin user as a regular Job, not a Helm hook.
+# Helm hooks block the upgrade until they complete — on a slow cluster this causes timeouts.
+createUserJob:
+  useHelmHooks: false
+  applyCustomEnv: false
