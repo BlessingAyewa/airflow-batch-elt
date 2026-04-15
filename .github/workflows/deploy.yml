@@ -88,10 +88,10 @@ jobs:
             sleep 10
           done
 
-      - name: Reset Helm-managed secrets
+      - name: Clean up completed jobs
         run: |
-          kubectl delete secret -n airflow airflow-fernet-key --ignore-not-found=true
-          kubectl delete secret -n airflow airflow-secret-key --ignore-not-found=true
+          kubectl delete job -n airflow airflow-create-user --ignore-not-found=true
+          kubectl delete job -n airflow airflow-run-airflow-migrations --ignore-not-found=true
 
       - name: Deploy to GKE with Helm
         run: |
@@ -101,7 +101,7 @@ jobs:
             --namespace airflow \
             --version "1.15.0" \
             --values k8s/helm/values.yaml \
-            --set image.tag=${{ github.sha }}
+            --set images.airflow.tag=${{ github.sha }}
 
       - name: Verify deployment
         run: |

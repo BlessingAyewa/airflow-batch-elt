@@ -6,19 +6,43 @@ executor: KubernetesExecutor
 defaultAirflowRepository: apache/airflow
 defaultAirflowTag: "2.9.1-python3.11"
 
-image:
-  repository: us-central1-docker.pkg.dev/blessing-airflow-elt/airflow/airflow
-  tag: latest
-  pullPolicy: Always
+images:
+  airflow:
+    repository: us-central1-docker.pkg.dev/blessing-airflow-elt/airflow/airflow
+    tag: latest
+    pullPolicy: Always
 
 # Helm manages these K8s secrets and injects them automatically.
-# Do NOT also list them in the secret: block — that causes duplicates.
 fernetKey: "een2jsLX0E36s5zpQO3aD_yheflVV5TK9CqJkFBTohw="
 webserverSecretKey: "a600842789bcfe1f7072918d2230abe70cf828ddf955f1b848fc56b211201ec3"
 
+# Force all components to use the 'airflow' K8s service account
+# which has the Workload Identity annotation for GCP access.
 serviceAccount:
   create: false
   name: airflow
+
+scheduler:
+  serviceAccount:
+    create: false
+    name: airflow
+
+webserver:
+  serviceAccount:
+    create: false
+    name: airflow
+  service:
+    type: LoadBalancer
+
+triggerer:
+  serviceAccount:
+    create: false
+    name: airflow
+
+workers:
+  serviceAccount:
+    create: false
+    name: airflow
 
 env:
   - name: AIRFLOW__CORE__LOAD_EXAMPLES
@@ -52,10 +76,6 @@ config:
     remote_base_log_folder: "gs://blessing-airflow-elt-airflow-data/airflow-logs"
     remote_log_conn_id: "google_cloud_default"
 
-webserver:
-  service:
-    type: LoadBalancer
-
 # Use our external postgres StatefulSet instead of the bundled Bitnami chart.
 postgresql:
   enabled: false
@@ -77,7 +97,6 @@ migrateDatabaseJob:
   enabled: false
 
 # Create the default admin user as a regular Job, not a Helm hook.
-# Helm hooks block the upgrade until they complete — on a slow cluster this causes timeouts.
 createUserJob:
   useHelmHooks: false
   applyCustomEnv: false

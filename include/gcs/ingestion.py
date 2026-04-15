@@ -29,15 +29,21 @@ def validate_orders(gcs_bucket: str, gcs_object: str) -> None:
         df = pd.read_csv(tmp.name)
         log.info("Loaded %d rows from %s", len(df), gcs_object)
 
-        context = gx.get_context(
-            mode="file",
-            project_root_dir="include/great_expectations"
-        )
-
-        batch = context.data_sources.pandas_default.read_dataframe(df)
-
-        suite = context.suites.get("orders_suite")
-        results = batch.validate(suite)
+        # GX needs to write scaffold directories — copy config to a writable
+        # temp dir since the image filesystem is read-only for the airflow user.
+        import os, shutil, tempfile
+        with tempfile.TemporaryDirectory() as tmp_gx_dir:
+            shutil.copytree(
+                "/opt/airflow/include/great_expectations",
+                os.path.join(tmp_gx_dir, "great_expectations")
+            )
+            context = gx.get_context(
+                mode="file",
+                project_root_dir=os.path.join(tmp_gx_dir, "great_expectations")
+            )
+            batch = context.data_sources.pandas_default.read_dataframe(df)
+            suite = context.suites.get("orders_suite")
+            results = batch.validate(suite)
 
         if not results.success:
             failed = [
