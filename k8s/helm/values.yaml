@@ -2,8 +2,7 @@
 
 executor: KubernetesExecutor
 
-# Pin the default image used by init containers and migration job
-# to the same Airflow version our custom image is built on.
+# Pin init containers to the same Airflow version our custom image is built on.
 defaultAirflowRepository: apache/airflow
 defaultAirflowTag: "2.9.1-python3.11"
 
@@ -11,6 +10,11 @@ image:
   repository: us-central1-docker.pkg.dev/blessing-airflow-elt/airflow/airflow
   tag: latest
   pullPolicy: Always
+
+# Helm manages these K8s secrets and injects them automatically.
+# Do NOT also list them in the secret: block — that causes duplicates.
+fernetKey: "een2jsLX0E36s5zpQO3aD_yheflVV5TK9CqJkFBTohw="
+webserverSecretKey: "a600842789bcfe1f7072918d2230abe70cf828ddf955f1b848fc56b211201ec3"
 
 serviceAccount:
   create: false
@@ -37,14 +41,6 @@ env:
     value: "raw"
   - name: AIRFLOW_VAR_BQ_TABLE
     value: "orders"
-
-secret:
-  - envName: AIRFLOW__CORE__FERNET_KEY
-    secretName: airflow-fernet-key
-    secretKey: fernet-key
-  - envName: AIRFLOW__WEBSERVER__SECRET_KEY
-    secretName: airflow-secret-key
-    secretKey: secret-key
 
 logs:
   persistence:
@@ -76,9 +72,6 @@ data:
 redis:
   enabled: false
 
-# Run DB migrations as a plain Job (not a Helm hook) so it always executes.
-# Uses defaultAirflowTag image above to match the migration head in the DB.
+# Migrations are run explicitly in CI before Helm deploys.
 migrateDatabaseJob:
-  enabled: true
-  useHelmHooks: false
-  applyCustomEnv: false
+  enabled: false
