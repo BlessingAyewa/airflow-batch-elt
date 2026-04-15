@@ -79,9 +79,14 @@ jobs:
             --restart=Never \
             --env="AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-postgresql:5432/airflow" \
             -- airflow db migrate
-          kubectl wait pod/db-migrate -n airflow \
-            --for=jsonpath='.status.phase'=Succeeded \
-            --timeout=5m
+          for i in $(seq 1 30); do
+            STATUS=$(kubectl get pod db-migrate -n airflow -o jsonpath='{.status.phase}' 2>/dev/null)
+            echo "Migration pod status: $STATUS"
+            if [ "$STATUS" = "Succeeded" ]; then echo "Migrations complete."; break; fi
+            if [ "$STATUS" = "Failed" ]; then kubectl logs -n airflow db-migrate; exit 1; fi
+            if [ "$i" = "30" ]; then echo "Migration timed out after 5 minutes"; kubectl logs -n airflow db-migrate; exit 1; fi
+            sleep 10
+          done
 
       - name: Deploy to GKE with Helm
         run: |
