@@ -31,7 +31,7 @@ def validate_orders(gcs_bucket: str, gcs_object: str) -> None:
 
         # GX needs to write scaffold directories — copy config to a writable
         # temp dir since the image filesystem is read-only for the airflow user.
-        import os, shutil, tempfile
+        import os, shutil
         with tempfile.TemporaryDirectory() as tmp_gx_dir:
             shutil.copytree(
                 "/opt/airflow/include/great_expectations",
