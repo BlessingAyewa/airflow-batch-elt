@@ -120,7 +120,8 @@ with DAG(
     
 
     DBT_DIR             = "/opt/airflow/include/dbt/orders_pipeline"
-    PROFILES_DIR        = "/opt/airflow/include/dbt" 
+    PROFILES_DIR        = "/opt/airflow/include/dbt"
+    DBT_LOG_PATH        = "/tmp/dbt-logs"
 
     with TaskGroup("transform") as transform_group:
         dbt_staging = BashOperator(
@@ -129,6 +130,7 @@ with DAG(
                 f"dbt run "
                 f"--profiles-dir {PROFILES_DIR} "
                 f"--project-dir {DBT_DIR} "
+                f"--log-path {DBT_LOG_PATH} "
                 f"--select staging "
                 f"--target prod"
             )
@@ -140,6 +142,7 @@ with DAG(
                 f"dbt test "
                 f"--profiles-dir {PROFILES_DIR} "
                 f"--project-dir {DBT_DIR} "
+                f"--log-path {DBT_LOG_PATH} "
                 f"--select staging "
                 f"--target prod"
             ),
@@ -151,6 +154,7 @@ with DAG(
                 f"dbt run "
                 f"--profiles-dir {PROFILES_DIR} "
                 f"--project-dir {DBT_DIR} "
+                f"--log-path {DBT_LOG_PATH} "
                 f"--select marts "
                 f"--target prod"
             ),
@@ -162,6 +166,7 @@ with DAG(
                 f"dbt test "
                 f"--profiles-dir {PROFILES_DIR} "
                 f"--project-dir {DBT_DIR} "
+                f"--log-path {DBT_LOG_PATH} "
                 f"--select marts "
                 f"--target prod"
             ),
