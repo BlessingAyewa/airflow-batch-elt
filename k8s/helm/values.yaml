@@ -13,8 +13,8 @@ images:
     pullPolicy: Always
 
 # Helm manages these K8s secrets and injects them automatically.
-fernetKey: "een2jsLX0E36s5zpQO3aD_yheflVV5TK9CqJkFBTohw="
-webserverSecretKey: "a600842789bcfe1f7072918d2230abe70cf828ddf955f1b848fc56b211201ec3"
+fernetKey: "fernet-key"
+webserverSecretKey: "secret-key"
 
 # Force all components to use the 'airflow' K8s service account
 # which has the Workload Identity annotation for GCP access.
